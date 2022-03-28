@@ -13,7 +13,7 @@ def city_station_names_from(db_train_url):
         station_names.append(table_rows[i].a.text)
 
     return station_names
-
+    
 if __name__ == "__main__":
     for station in city_station_names_from(sys.argv[1]):
         print(station)
