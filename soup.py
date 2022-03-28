@@ -1,11 +1,11 @@
-from re import T
-from tokenize import String
 import requests
 from bs4 import BeautifulSoup
-import sys
-from urllib.parse import urlparse, parse_qs, urlencode
+from urllib.parse import urlencode
 import json
 import time
+import requests_cache
+
+db_station_cache = requests_cache.CachedSession('db_station_api_cache')
 
 class DB_API:
     def get(self,db_url):
@@ -42,7 +42,7 @@ class Station(object):
                 "S" : self.name()
             }
             DB_URL = "https://www.img-bahn.de/bin/ajax-getstop.exe/dn?"
-            r = requests.get(DB_URL + urlencode(query))
+            r = db_station_cache.get(DB_URL + urlencode(query))
             self.__db_data = json.loads(r.text[8:][:-22])['suggestions'][0]
 
     def db_data(self):

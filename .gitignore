@@ -133,5 +133,6 @@ train_route_1
 Mulhouse Ville.html
 Dijon*
 
+db_station_api_cache.sqlite
 #other python test scripts
 test.py
