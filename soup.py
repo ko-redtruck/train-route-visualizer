@@ -29,6 +29,10 @@ class Station(object):
         lng = int(lng)/10**6
         return [lat,lng]
     
+    def db_name(self):
+        self.__load_db_data()
+        return self.__db_data["value"]
+
     def __load_db_data(self):
         if self.__db_data == None:
             """
@@ -89,6 +93,12 @@ class Journey:
     def end_station(self):
         return Journey_Station(self.__table_data.find("tr",class_="last"))
     
+    def duration(self):
+        return self.__table_data.find("tr",class_="firstrow").find("td",class_="duration lastrow").text.strip()
+    def changes(self):
+        return self.__table_data.find("tr",class_="firstrow").find("td",class_="changes lastrow").text.strip()
+    def products(self):
+        return self.__table_data.find("tr",class_="firstrow").find("td",class_="products lastrow").text.strip()
     def __load_all_stations(self):
         if self.__all_station_data == None:
             query_string = urlencode({"HWAI":self.__build_HWAI_string_for_all_stations()})
@@ -111,7 +121,7 @@ class Journey:
     def transfer_stations(self):
         print(self.__transfer_stations_data)
         self.__load_transfer_stations()
-        soup = BeautifulSoup(self.__transfer_stations_data)
+        soup = BeautifulSoup(self.__transfer_stations_data,"html5lib")
         stations = []
         transfer_count = 0
         for row in soup.find_all("tr"):
@@ -125,7 +135,7 @@ class Journey:
         return stations
     def all_stations(self):
         self.__load_all_stations()
-        soup = BeautifulSoup(self.__all_station_data)
+        soup = BeautifulSoup(self.__all_station_data,"html5lib")
         
         stations = []
         transfer_count = 0
@@ -161,13 +171,8 @@ class Trip:
             default_query_parameters["seqnr"] = 1
 
         
-        
-        print(self.DB_URL + urlencode(default_query_parameters) + "&" + query_string)
         r =  requests.get(self.DB_URL + urlencode(default_query_parameters) + "&" + query_string)
         self.__db_response_cookies = r.cookies
-
-        with open("response-details.html", "w") as f:
-            f.write(r.text)
 
         return r
 
@@ -212,7 +217,7 @@ class Trip:
             f.write(r.text)
         self.__db_response_cookies = r.cookies
         self.__db_results = r.text
-        self.__soup = BeautifulSoup(self.__db_results)
+        self.__soup = BeautifulSoup(self.__db_results,"html5lib")
 
     def journies(self):
         journies_table = self.__soup.find(id="resultsOverview")
