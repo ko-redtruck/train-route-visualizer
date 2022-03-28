@@ -2,18 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlencode
 import json
-import time
+import time,datetime
 import requests_cache
-
 db_station_cache = requests_cache.CachedSession('db_station_api_cache')
-
-class DB_API:
-    def get(self,db_url):
-        r = requests.get(db_url)
-        self.__response_headers = r.headers
-        return r
-    def response_headers(self):
-        return self.__response_headers
 
 class Station(object):
     __db_data = None
@@ -153,7 +144,14 @@ class Journey:
 class Trip:
     DB_URL = "https://reiseauskunft.bahn.de/bin/query.exe/dn?"
 
-    def __init__(self,start_station,destination_station,start_time=time.localtime()):
+    def __default_start_time(self):
+        #tomorrow at 06:00
+        return (datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=6,minute=0)
+
+    def __init__(self,start_station,destination_station,start_time=None):
+        if start_time == None:
+            start_time = self.__default_start_time()
+        self.__start_time = start_time
         self.__load_db_trip_data(start_station,destination_station,start_time)
 
     def load_db_details_data(self,query_string):
@@ -175,7 +173,8 @@ class Trip:
         self.__db_response_cookies = r.cookies
 
         return r
-
+    def start_time(self):
+        return self.__start_time.strftime("%d.%m.%Y %H:%M")
     def __load_db_trip_data(self,start_station,destination_station,start_time):
         
         query = {
@@ -208,13 +207,11 @@ class Trip:
         query["Z"] = destination_station.db_data()["value"]
         query["REQ0JourneyStopsZID"] = destination_station.db_data()["id"]
 
-        query["date"] = time.strftime("%d.%m.%y",start_time)
-        query["time"] = time.strftime("%H:%M",start_time)
+        query["date"] = start_time.strftime("%d.%m.%Y")
+        query["time"] = start_time.strftime("%H:%M")
 
         r = requests.get(self.DB_URL + urlencode(query))
-        
-        with open("response2.html", "w") as f:
-            f.write(r.text)
+
         self.__db_response_cookies = r.cookies
         self.__db_results = r.text
         self.__soup = BeautifulSoup(self.__db_results,"html5lib")
