@@ -35,7 +35,7 @@ class DB_Journey_Scraper:
         transfer_count = 0
 
         for li in all_station_soup.find_all("li"):
-            if li.get("class") is not None and "remarks" not in li.get("class") and "intermediate" not in li.get("class"):
+            if li.get("class") is not None and "remarks" not in li.get("class") and "intermediate" not in li.get("class") and "dateDivider" not in li.get("class"):
                 if "intermediateStationRow" in li.get("class"):
                     station_name = li.select_one("div.intermediateStation").contents[0].strip()
                 elif "sectionArrival" in li.get("class"):
