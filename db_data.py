@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 import json
 import time,datetime
 import requests_cache
+import code
 
 db_station_cache = requests_cache.CachedSession('db_station_api_cache')
 
@@ -57,6 +58,18 @@ class Journey_Station(Station):
     def is_intermediate(self):
         return False
 
+class Raw_Station(Station):
+    def __init__(self,name,time):
+        self.__time = time
+        super().__init__(name)
+
+    def __filter_time(self,time_string):
+        return time_string.replace("-","").strip()
+    def time(self):
+        return self.__filter_time(self.__time)
+    def is_intermediate(self):
+        return False
+
 class Intermediate_Journey_Station(Station):
     def __init__(self,row_data):
         self.__row_data = row_data
@@ -80,17 +93,29 @@ class Journey:
     def __init__(self,table_data,trip):
         self.__table_data = table_data
         self.__trip = trip
+    
+    #WEB SCRAPING START
+
     def start_station(self):
-        return Journey_Station(self.__table_data.find("tr",class_="firstrow"))
+        return Raw_Station(
+                self.__table_data.find("div",class_="station first").text,
+                self.__table_data.find("div",class_="time timeDep").text.replace("-","").strip()
+            )
     def end_station(self):
-        return Journey_Station(self.__table_data.find("tr",class_="last"))
+        return Raw_Station(
+                self.__table_data.find("div",class_="station stationDest").text.strip(),
+                self.__table_data.find("div",class_="time timeArr").text
+            )
     
     def duration(self):
-        return self.__table_data.find("tr",class_="firstrow").find("td",class_="duration lastrow").text.strip()
+        return self.__table_data.find("div",class_="duration").text.replace("|","").strip()
     def changes(self):
-        return self.__table_data.find("tr",class_="firstrow").find("td",class_="changes lastrow").text.strip()
+        return self.__table_data.find("div",class_="changes").text.replace("Umstiege","").replace(",","").strip()
     def products(self):
-        return self.__table_data.find("tr",class_="firstrow").find("td",class_="products lastrow").text.strip()
+        return self.__table_data.find("div",class_="products").text.replace("|","").strip()
+
+    #WEB SCRAPING END
+
     def __load_all_stations(self):
         if self.__all_station_data == None:
             query_string = urlencode({"HWAI":self.__build_HWAI_string_for_all_stations()})
@@ -110,6 +135,7 @@ class Journey:
         if self.__transfer_stations_data == None:
            self.__transfer_stations_data = self.__trip.load_db_details_data(urlencode({"HWAI":self.__build_HWAI_string_for_transfer_stations()})).text
         
+    #WARNING: status broken!
     def transfer_stations(self):
         print(self.__transfer_stations_data)
         self.__load_transfer_stations()
@@ -128,18 +154,30 @@ class Journey:
     def all_stations(self):
         self.__load_all_stations()
         soup = BeautifulSoup(self.__all_station_data,"html5lib")
-        
+
         stations = []
         transfer_count = 0
-        for row in soup.find_all("tr"):
-            if row.get("class") is not None:
-                if "first" in row.get("class"):
-                    stations.append([Journey_Station(row)])
-                elif "last" in row.get("class"):
-                    stations[transfer_count].append(Journey_Station(row))
+
+        #WEB SCARPING START
+        for li in soup.find_all("li"):
+            if li.get("class") is not None and "remarks" not in li.get("class") and "intermediate" not in li.get("class"):
+                if "intermediateStationRow" in li.get("class"):
+                    station_name = li.select_one("div.intermediateStation").contents[0].strip()
+                elif "sectionArrival" in li.get("class"):
+                    station_name = li.select_one("div.station").text.strip()
+                else:
+                    station_name = li.select_one("div.station").contents[0].strip()
+                station_time = li.select_one("div.time").text.strip()
+                station = Raw_Station(station_name,station_time)
+
+                if "sectionDeparture" in li.get("class"):
+                    stations.append([station])
+                elif "sectionArrival" in li.get("class"):
+                    stations[transfer_count].append(station)
                     transfer_count += 1
-                elif "intermediateStationRow" in row.get("class"):
-                    stations[transfer_count].append(Intermediate_Journey_Station(row))
+                elif "intermediateStationRow" in li.get("class"):
+                    stations[transfer_count].append(station)
+        #WEB SCRAPING END
         return stations
 
 class Trip:
@@ -218,8 +256,10 @@ class Trip:
         self.__soup = BeautifulSoup(self.__db_results,"html5lib")
 
     def journies(self):
-        journies_table = self.__soup.find(id="resultsOverview")
-        journies = [Journey(tbody,self) for tbody in journies_table.find_all("tbody") if tbody.get("id") is not None and "overview_update" in tbody.get("id")]
+        #WEB SCRAPING START        
+        journies_div = self.__soup.find(id="resultsOverviewContainer")
+        journies = [Journey(tbody,self) for tbody in journies_div.find_all("div") if tbody.get("id") is not None and "overview_update" in tbody.get("id")]
+        #WEB SCRAPING END
         if len(journies) == 0:
             raise Exception("No journies/trains found. Please supply new url")
         return journies

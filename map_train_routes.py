@@ -10,6 +10,7 @@ def draw(train_journey,only_transfer_stations=False):
         train_routes = train_journey.all_stations()
 
     transfer_count = 0
+    print(train_routes)
     for train_route in train_routes:
         route_line_points = []
         for station in train_route:  
@@ -36,8 +37,13 @@ if __name__ == "__main__":
     start_and_endpoint_is_not_confirmed = True
 
     while start_and_endpoint_is_not_confirmed:
-        start_station_name = input("Start train station: ")
-        destination_station_name = input("Destination train station: ")
+        start_station_name = ""
+        while start_station_name == "":
+            start_station_name = input("Start train station: ")
+        
+        destination_station_name = ""
+        while destination_station_name == "":
+            destination_station_name = input("Destination train station: ")
 
         start_station = Station(start_station_name)
         destination_station = Station(destination_station_name)
