@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,500,300italic,700,700italic">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">    <link rel="stylesheet" type="text/css" href="https://rawgit.com/outboxcraft/beauter/master/beauter.min.css">
+    <title>Train route visualizer</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <h1 style="font-weight: 500;">Visualize any European train route</h1>
+            <p>Powered by <a href="https://github.com/ko-redtruck/train-route-visualizer">github.com/ko-redtruck/train-route-visualizer</a></p>
+            <form action="/stations">
+            <label>Start train station name</label>
+            <input type="text" name="start">
+            <label>Destination train station name</label>
+            <input type="text" name="dest">
+            <br>
+            <button class=" _primary"type="submit" value="Submit">Go</button>
+            </form>
+    
+        </div>
+        <div class="row">
+            <h2>Examples</h2>
+            <ul>
+                <li><a href="/map?start=Rom&dest=Berlin">Rome - Berlin</a></li>
+                <li><a href="/map?start=Paris&dest=Budapest">Paris - Budapest</a></li>
+                <li><a href="/map?start=Oslo&dest=Trondheim">Oslo - Trondheim</a></li>
+                <li><a href="/map?start=Copenhagen&dest=Munich">Copenhagen - Munich</a></li>
+                <li><a href="/map?start=Bern&dest=Warsaw">Bern - Warsaw</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    
+</body>
+</html>
+

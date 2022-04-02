@@ -2,8 +2,9 @@ import folium
 from db_data import Journey, Trip,Station
 import datetime
 
+
 def draw(train_journey,only_transfer_stations=False):
-    map = folium.Map(location= train_journey.start_station().location())
+    map = folium.Map(location= train_journey.start_station().location(),zoom_start=6)
     if only_transfer_stations == True:
         train_routes = train_journey.transfer_stations()
     else:
@@ -27,10 +28,13 @@ def draw(train_journey,only_transfer_stations=False):
 
         transfer_count += 1
     
+    return map
+
+def draw_and_save_to_file(train_journey,only_transfer_stations=False):
+    map = draw(train_journey,only_transfer_stations)
     map_filename = f"{train_journey.start_station().name()}-{train_journey.end_station().name()}.html"
     map.save(map_filename)
     return map_filename
-
 
 if __name__ == "__main__":
     start_and_endpoint_is_not_confirmed = True    
@@ -76,7 +80,7 @@ if __name__ == "__main__":
     
     route_selection = int(input(f"Type 0-{len(train_trip.journies())-1} for which route to visualize: "))
 
-    saved_map_filename = draw(train_trip.journies()[route_selection])
+    saved_map_filename = draw_and_save_to_file(train_trip.journies()[route_selection])
     print(f"Saved map in {saved_map_filename}")
         
 
