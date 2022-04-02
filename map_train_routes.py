@@ -34,8 +34,7 @@ def draw(train_journey,only_transfer_stations=False):
 
 
 if __name__ == "__main__":
-    start_and_endpoint_is_not_confirmed = True
-
+    start_and_endpoint_is_not_confirmed = True    
     while start_and_endpoint_is_not_confirmed:
         start_station_name = ""
         while start_station_name == "":
