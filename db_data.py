@@ -1,19 +1,21 @@
+from shelve import DbfilenameShelf
 import requests
-from bs4 import BeautifulSoup
 from urllib.parse import urlencode
 import json
-import time,datetime
+import datetime
 import requests_cache
-import code
+
+from db_scraper import DB_Journey_Scraper,DB_Trip_Scraper
 
 db_station_cache = requests_cache.CachedSession('db_station_api_cache')
 
 class Station(object):
     __db_data = None
-    def __init__(self,name):
+    def __init__(self,name,time=None):
         self.__name = name
+        self.__time = time
     def name(self):
-        return self.__name
+        return self.__name.strip()
     def location(self):
         self.__load_db_data()
         lat =  self.__db_data["ycoord"]
@@ -24,7 +26,7 @@ class Station(object):
     
     def db_name(self):
         self.__load_db_data()
-        return self.__db_data["value"]
+        return self.__db_data["value"].strip()
 
     def __load_db_data(self):
         if self.__db_data == None:
@@ -41,144 +43,58 @@ class Station(object):
     def db_data(self):
         self.__load_db_data()
         return self.__db_data
-        
-
-class Journey_Station(Station):
-    def __init__(self,row_data):
-        self.__row_data = row_data
-        super().__init__(self.__name())
-
-    def __filter_time(self,time_string):
-        return time_string.replace("ab","").replace("an","").strip()
-    def __name(self):
-        return self.__row_data.find("td",class_="station").text.strip()
-
-    def time(self):
-        return self.__filter_time(self.__row_data.find("td",class_="time").text)
-    def is_intermediate(self):
-        return False
-
-class Raw_Station(Station):
-    def __init__(self,name,time):
-        self.__time = time
-        super().__init__(name)
-
+    
     def __filter_time(self,time_string):
         return time_string.replace("-","").strip()
     def time(self):
         return self.__filter_time(self.__time)
     def is_intermediate(self):
         return False
-
-class Intermediate_Journey_Station(Station):
-    def __init__(self,row_data):
-        self.__row_data = row_data
-        super().__init__(self.__name())
-    def __filter_time(self,time_string):
-        return time_string.replace("ab","").replace("an","").strip()
-    def __name(self):
-        return self.__row_data.find("td",class_="intermediateStation").text.strip()
-    def time(self):
-        return self.__filter_time(self.__row_data.find("td",class_="intermediatTime").text)
-    def is_intermediate(self):
-        return True
+    
 
 class Journey:
-    __transfer_stations_data = None
-    __all_station_data = None
+    __all_stations_raw_data = None
     __trip = None
 
     DB_URL = "https://reiseauskunft.bahn.de/bin/query.exe/dn"
 
     def __init__(self,table_data,trip):
-        self.__table_data = table_data
+        self.__scraper = DB_Journey_Scraper(table_data)
         self.__trip = trip
     
-    #WEB SCRAPING START
-
     def start_station(self):
-        return Raw_Station(
-                self.__table_data.find("div",class_="station first").text,
-                self.__table_data.find("div",class_="time timeDep").text.replace("-","").strip()
+        return Station(
+                self.__scraper.start_station_name(),
+                self.__scraper.start_station_time()
             )
     def end_station(self):
-        return Raw_Station(
-                self.__table_data.find("div",class_="station stationDest").text.strip(),
-                self.__table_data.find("div",class_="time timeArr").text
+        return Station(
+                self.__scraper.destination_station_name(),
+                self.__scraper.destination_station_time()
             )
     
     def duration(self):
-        return self.__table_data.find("div",class_="duration").text.replace("|","").strip()
+        return self.__scraper.duration()
     def changes(self):
-        return self.__table_data.find("div",class_="changes").text.replace("Umstiege","").replace(",","").strip()
+        return self.__scraper.changes()
     def products(self):
-        return self.__table_data.find("div",class_="products").text.replace("|","").strip()
-
-    #WEB SCRAPING END
+        return self.__scraper.products()
 
     def __load_all_stations(self):
-        if self.__all_station_data == None:
+        if self.__all_stations_raw_data == None:
             query_string = urlencode({"HWAI":self.__build_HWAI_string_for_all_stations()})
-            self.__all_station_data = self.__trip.load_db_details_data(query_string).text
+            self.__all_stations_raw_data = self.__trip.load_db_details_data(query_string).text
 
-    def __build_HWAI_string_for_transfer_stations(self):
-        id = self.__hwai_id()
-        return f"CONNECTION${id}!id={id}!HwaiConId={id}!HwaiDetailStatus=details!"
-    
     def __hwai_id(self):
-        return self.__table_data.get("id").replace("overview_update","")
+        return self.__scraper.hwai_id()
+
     def __build_HWAI_string_for_all_stations(self):
         id = self.__hwai_id()
         return f"CONNECTION${id}!id={id}!HwaiConId={id}!HwaiDetailStatus=journeyGuide!"
 
-    def __load_transfer_stations(self):
-        if self.__transfer_stations_data == None:
-           self.__transfer_stations_data = self.__trip.load_db_details_data(urlencode({"HWAI":self.__build_HWAI_string_for_transfer_stations()})).text
-        
-    #WARNING: status broken!
-    def transfer_stations(self):
-        print(self.__transfer_stations_data)
-        self.__load_transfer_stations()
-        soup = BeautifulSoup(self.__transfer_stations_data,"html5lib")
-        stations = []
-        transfer_count = 0
-        for row in soup.find_all("tr"):
-            if row.get("class") is not None:
-                if "first" in row.get("class"):
-                    stations.append([Journey_Station(row)])
-                if "last" in row.get("class"):
-                    stations[transfer_count].append(Journey_Station(row))
-                    transfer_count += 1
-
-        return stations
     def all_stations(self):
         self.__load_all_stations()
-        soup = BeautifulSoup(self.__all_station_data,"html5lib")
-
-        stations = []
-        transfer_count = 0
-
-        #WEB SCARPING START
-        for li in soup.find_all("li"):
-            if li.get("class") is not None and "remarks" not in li.get("class") and "intermediate" not in li.get("class"):
-                if "intermediateStationRow" in li.get("class"):
-                    station_name = li.select_one("div.intermediateStation").contents[0].strip()
-                elif "sectionArrival" in li.get("class"):
-                    station_name = li.select_one("div.station").text.strip()
-                else:
-                    station_name = li.select_one("div.station").contents[0].strip()
-                station_time = li.select_one("div.time").text.strip()
-                station = Raw_Station(station_name,station_time)
-
-                if "sectionDeparture" in li.get("class"):
-                    stations.append([station])
-                elif "sectionArrival" in li.get("class"):
-                    stations[transfer_count].append(station)
-                    transfer_count += 1
-                elif "intermediateStationRow" in li.get("class"):
-                    stations[transfer_count].append(station)
-        #WEB SCRAPING END
-        return stations
+        return [[Station(station_data["name"],station_data["time"]) for station_data in train] for train in self.__scraper.all_stations_data_from(self.__all_stations_raw_data)]
 
 class Trip:
     DB_URL = "https://reiseauskunft.bahn.de/bin/query.exe/dn?"
@@ -252,14 +168,7 @@ class Trip:
         r = requests.get(self.DB_URL + urlencode(query))
 
         self.__db_response_cookies = r.cookies
-        self.__db_results = r.text
-        self.__soup = BeautifulSoup(self.__db_results,"html5lib")
+        self.__scraper = DB_Trip_Scraper(r.text)
 
     def journies(self):
-        #WEB SCRAPING START        
-        journies_div = self.__soup.find(id="resultsOverviewContainer")
-        journies = [Journey(tbody,self) for tbody in journies_div.find_all("div") if tbody.get("id") is not None and "overview_update" in tbody.get("id")]
-        #WEB SCRAPING END
-        if len(journies) == 0:
-            raise Exception("No journies/trains found. Please supply new url")
-        return journies
+        return [Journey(journey_data,self) for journey_data in self.__scraper.journies_data()]

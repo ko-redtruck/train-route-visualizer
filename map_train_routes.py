@@ -10,7 +10,6 @@ def draw(train_journey,only_transfer_stations=False):
         train_routes = train_journey.all_stations()
 
     transfer_count = 0
-    print(train_routes)
     for train_route in train_routes:
         route_line_points = []
         for station in train_route:  
