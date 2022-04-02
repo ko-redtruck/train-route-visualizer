@@ -1,5 +1,5 @@
 import folium
-from soup import Journey, Trip,Station
+from db_data import Journey, Trip,Station
 import datetime
 
 def draw(train_journey,only_transfer_stations=False):
