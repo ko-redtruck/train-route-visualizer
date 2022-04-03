@@ -24,10 +24,24 @@ class Station(object):
         lng = int(lng)/10**6
         return [lat,lng]
     
+    def __decode_db_ascii_string(self,str):
+        raw_characters = list(str)
+        real_characters = []
+        i=0
+        while i < len(raw_characters):
+            c = raw_characters[i]
+            if i < len(raw_characters)-2 and "".join(raw_characters[i:i+3]) == "&#x":
+                c = chr(int("".join(raw_characters[i+3:i+7]),base=16))
+                i+=7
+            real_characters.append(c)
+            i+=1
+        return "".join(real_characters)
+
     def db_name(self):
         self.__load_db_data()
-        return self.__db_data["value"].strip()
-
+        #Freiburg&#x0028;
+        return self.__decode_db_ascii_string(self.__db_data["value"].strip())
+        
     def __load_db_data(self):
         if self.__db_data == None:
             """
@@ -98,15 +112,21 @@ class Journey:
 
 class Trip:
     DB_URL = "https://reiseauskunft.bahn.de/bin/query.exe/dn?"
-
+    
     def __default_start_time(self):
         #tomorrow at 06:00
         return (datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=6,minute=0)
 
+    def start_station(self):
+        return self.__start_station
+    def destination_station(self):
+        return self.__destination_station
     def __init__(self,start_station,destination_station,start_time=None):
         if start_time == None:
             start_time = self.__default_start_time()
         self.__start_time = start_time
+        self.__start_station = start_station
+        self.__destination_station = destination_station
         self.__load_db_trip_data(start_station,destination_station,start_time)
 
     def load_db_details_data(self,query_string):
@@ -169,6 +189,12 @@ class Trip:
 
         self.__db_response_cookies = r.cookies
         self.__scraper = DB_Trip_Scraper(r.text)
-
+        if "leider konnte zu Ihrer Anfrage keine Verbindung gefunden werden" in r.text:
+            self.__connection_found = False
+        else:
+            self.__connection_found = True
     def journies(self):
-        return [Journey(journey_data,self) for journey_data in self.__scraper.journies_data()]
+        if self.__connection_found:
+            return [Journey(journey_data,self) for journey_data in self.__scraper.journies_data()]
+        else:
+            return []

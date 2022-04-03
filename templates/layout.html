@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,500,300italic,700,700italic">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">    <link rel="stylesheet" type="text/css" href="https://rawgit.com/outboxcraft/beauter/master/beauter.min.css">
+    <title>Train route visualizer</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <h1 style="font-weight: 500;">Visualize any European train route</h1>
+            <p>Powered by <a href="https://github.com/ko-redtruck/train-route-visualizer">github.com/ko-redtruck/train-route-visualizer</a></p>
+            <div class="row _bordered _shadow">
+            <div class="col">
+                {% block train_query %}
+            
+            {% endblock %}
+            </div>
+            
+            </div>
+        </div>
+        <div class="row">
+            <div class="col" style="padding-bottom: 0;">            
+                <h2>Examples</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col m6">
+                <h3>Maps</h3>
+                <ul>
+                    <li><a href="/map?start=Rom&dest=Berlin">Rome - Berlin</a></li>
+                    <li><a href="/map?start=Paris&dest=Budapest">Paris - Budapest</a></li>
+                    <li><a href="/map?start=Oslo&dest=Trondheim">Oslo - Trondheim</a></li>
+                    <li><a href="/map?start=Copenhagen&dest=Munich">Copenhagen - Munich</a></li>
+                    <li><a href="/map?start=Bern&dest=Warsaw">Bern - Warsaw</a></li>
+            </ul>
+            </div>
+            <div class="col m6">
+                <h3>Routes</h3>
+                <ul>
+                    <li><a href="/routes?start=Rom&dest=Berlin">Rome - Berlin</a></li>
+                    <li><a href="/routes?start=Paris&dest=Budapest">Paris - Budapest</a></li>
+                    <li><a href="/routes?start=Oslo&dest=Trondheim">Oslo - Trondheim</a></li>
+                    <li><a href="/routes?start=Copenhagen&dest=Munich">Copenhagen - Munich</a></li>
+                    <li><a href="/routes?start=Bern&dest=Warsaw">Bern - Warsaw</a></li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+    
+    
+</body>
+</html>
+

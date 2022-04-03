@@ -1,3 +1,4 @@
+from distutils.log import debug
 from flask import Flask
 from flask import request, render_template
 from map_train_routes import draw
@@ -46,9 +47,11 @@ def routes():
         train_routes=train_routes,
         number_of_train_routes=len(train_routes),
         start_station_name=request.args.get('start'),
-        destination_station_name=request.args.get("dest")
+        destination_station_name=request.args.get("dest"),
+        start_station_db_name = start_station.db_name(),
+        destination_station_db_name = destination_station.db_name()
     )
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
