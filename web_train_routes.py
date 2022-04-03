@@ -20,8 +20,6 @@ def map():
     if request.args.get("num") != None:
         route_number = int(request.args.get("num"))-1
 
-        
-
     map = draw(Trip(start_station,destination_station).journies()[route_number])
     return map._repr_html_()
 
@@ -51,7 +49,6 @@ def routes():
         start_station_db_name = start_station.db_name(),
         destination_station_db_name = destination_station.db_name()
     )
-
 
 if __name__ == '__main__':
     app.run(debug=True)

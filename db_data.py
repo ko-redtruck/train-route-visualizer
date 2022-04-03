@@ -1,4 +1,3 @@
-from shelve import DbfilenameShelf
 import requests
 from urllib.parse import urlencode
 import json
