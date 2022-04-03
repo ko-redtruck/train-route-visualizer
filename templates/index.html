@@ -2,9 +2,9 @@
 {% block train_query %}
     <form action="/stations">
         <label>Start train station name</label>
-        <input type="text" name="start">
+        <input type="text" name="start" value="{{start_station_name}}">
         <label>Destination train station name</label>
-        <input type="text" name="dest">
+        <input type="text" name="dest" value="{{destination_station_name}}">
         <br>
         <button class=" _primary"type="submit" value="Submit">Go</button>
     </form>

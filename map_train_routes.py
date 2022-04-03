@@ -1,10 +1,15 @@
 import folium
+from folium.plugins import LocateControl,MeasureControl
 from db_data import Journey, Trip,Station
 import datetime
 
 
 def draw(train_journey,only_transfer_stations=False):
     map = folium.Map(location= train_journey.start_station().location(),zoom_start=6)
+    
+    LocateControl().add_to(map)
+    MeasureControl().add_to(map)
+    
     if only_transfer_stations == True:
         train_routes = train_journey.transfer_stations()
     else:
@@ -21,7 +26,7 @@ def draw(train_journey,only_transfer_stations=False):
             folium.Circle(
                 radius=1000,
                 location=station.location(),
-                popup=station.name(),
+                popup=f"{station.name()} - {station.time()}",
                 color="crimson",
                 fill=True,
             ).add_to(map)

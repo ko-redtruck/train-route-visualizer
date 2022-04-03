@@ -51,7 +51,10 @@ class Station(object):
             }
             DB_URL = "https://www.img-bahn.de/bin/ajax-getstop.exe/dn?"
             r = db_station_cache.get(DB_URL + urlencode(query))
-            self.__db_data = json.loads(r.text[8:][:-22])['suggestions'][0]
+            suggested_train_stations = json.loads(r.text[8:][:-22])['suggestions']
+            if len(suggested_train_stations) == 0:
+                raise LookupError("Train station not found")
+            self.__db_data = suggested_train_stations[0]
 
     def db_data(self):
         self.__load_db_data()

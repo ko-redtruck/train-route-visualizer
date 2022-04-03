@@ -1,16 +1,43 @@
 from distutils.log import debug
+from tracemalloc import start
 from flask import Flask
 from flask import request, render_template
 from map_train_routes import draw
 from db_data import Station,Trip
-
+from train_station_folium import JavascriptMarker
+import folium
+import urllib.parse
+import pandas as pd
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
-    return render_template("index.html")
+    start_station_name = request.args.get("start")
+    start_station_name = start_station_name if start_station_name is not None else ""
+    
+    destination_station_name = request.args.get("dest")
+    destination_station_name = destination_station_name if destination_station_name is not None else ""
 
+
+    return render_template("index.html",
+        start_station_name = start_station_name,
+        destination_station_name = destination_station_name
+    )
+
+
+@app.route('/map-stations')
+def map_train_stations():
+    map = folium.Map(location= [50.11,8.68],zoom_start=5)
+
+    df = pd.read_csv("train_stations_db_low_error.csv",sep=";")
+    #df = df.query("is_main_station=='t'")
+    for i,train_station in df.iterrows():
+        JavascriptMarker(
+            [train_station.latitude, train_station.longitude], popup=f"<i>{train_station.name}</i>"
+        ).add_to(map)
+
+    return map._repr_html_()
 
 @app.route('/map')
 def map():
@@ -21,6 +48,11 @@ def map():
         route_number = int(request.args.get("num"))-1
 
     map = draw(Trip(start_station,destination_station).journies()[route_number])
+    
+    JavascriptMarker(
+        [45.3288, -121.6625], popup="<i>Mt. Hood Meadows</i>"
+    ).add_to(map)
+
     return map._repr_html_()
 
 @app.route('/stations')
