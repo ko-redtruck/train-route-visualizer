@@ -16,10 +16,10 @@ class DB_Journey_Scraper:
         return self.__soup.find("div",class_="time timeDep").text.replace("-","").strip()
         
     def destination_station_name(self):
-        return self.__soup.find("div",class_="station stationDest").text.strip()
+        return self.__soup.find("div",class_="station stationDest").text.replace("-","").strip()
 
     def destination_station_time(self):
-        return self.__soup.find("div",class_="time timeArr").text
+        return self.__soup.find("div",class_="time timeArr").text.replace("-","").strip()
 
     def duration(self):
         return self.__soup.find("div",class_="duration").text.replace("|","").strip()

@@ -59,7 +59,7 @@ class Station(object):
         return self.__db_data
     
     def __filter_time(self,time_string):
-        return time_string.replace("-","").strip()
+        return time_string.replace("–","").strip()
     def time(self):
         return self.__filter_time(self.__time)
     def is_intermediate(self):
