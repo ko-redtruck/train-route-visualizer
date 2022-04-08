@@ -12,4 +12,6 @@ python3 map_train_routes.py
 ```
 ![image](https://user-images.githubusercontent.com/24638508/160465892-0f0277fd-9334-4d96-86f2-a45aedc5d1cd.png)
 
-
+<a href="https://trackgit.com">
+<img src="https://us-central1-trackgit-analytics.cloudfunctions.net/token/ping/l1r2i3lcyf48c87aqpl1" alt="trackgit-views" />
+</a>
